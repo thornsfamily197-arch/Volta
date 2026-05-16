@@ -144,3 +144,156 @@ input:focus{border-color:var(--volt);}
 </style>
 </head>
 <body>
+<div class="flash-overlay" id="flashEl"></div>
+<div class="wipe" id="wipeEl">
+  <div class="wipe-panel"></div><div class="wipe-panel"></div>
+  <div class="wipe-panel"></div><div class="wipe-panel"></div>
+  <div class="wipe-panel"></div>
+</div>
+<div class="volta-nav">
+  <div class="logo">VOLT<span>A</span></div>
+  <div class="step-indicator">
+    <div class="step-dot active" id="dot0"></div>
+    <div class="step-dot" id="dot1"></div>
+    <div class="step-dot" id="dot2"></div>
+    <div class="step-dot" id="dot3"></div>
+  </div>
+</div>
+<div class="page active" id="page1" style="transform:translateX(0);">
+  <div class="page-eyebrow">// Step 01 of 04</div>
+  <h1 class="page-title">CHOOSE YOUR<br><span class="v">FORMAT.</span></h1>
+  <p class="page-sub">How are you presenting this story? Pick your format and Volta writes to match.</p>
+  <div class="format-grid">
+    <div class="format-card sel" id="fc-short" onclick="selectFormat('short')">
+      <span class="fc-icon">📱</span>
+      <span class="fc-title">YOUTUBE SHORT</span>
+      <p class="fc-desc">Fast, punchy, high-energy script built for YouTube Shorts. Every panel locks the viewer in.</p>
+    </div>
+    <div class="format-card" id="fc-long" onclick="selectFormat('long')">
+      <span class="fc-icon">🎬</span>
+      <span class="fc-title">LONG FORM VIDEO</span>
+      <p class="fc-desc">Full-depth script with complete story arcs, rich pacing, and detailed breakdowns for deep dives.</p>
+    </div>
+  </div>
+  <div class="btn-col">
+    <button class="next-btn" onclick="goTo(2)">NEXT — NARRATIVE STYLE →</button>
+  </div>
+</div>
+<div class="page" id="page2" style="transform:translateX(60px);">
+  <div class="page-eyebrow">// Step 02 of 04</div>
+  <h1 class="page-title">NARRATIVE<br><span class="v">STYLE.</span></h1>
+  <p class="page-sub">How is the story told? This shapes every caption, every line, every panel.</p>
+  <div class="style-grid" id="styleGrid"></div>
+  <div class="btn-col">
+    <button class="next-btn" onclick="goTo(3)">NEXT — COMIC ARC →</button>
+    <button class="back-btn" onclick="goTo(1)">← BACK</button>
+  </div>
+</div>
+<div class="page" id="page3" style="transform:translateX(60px);">
+  <div class="page-eyebrow">// Step 03 of 04</div>
+  <h1 class="page-title">COMIC<br><span class="v">ARC.</span></h1>
+  <p class="page-sub">What story are we building from? Type any real comic arc — Volta already knows it.</p>
+  <div class="arc-form">
+    <div class="ig">
+      <div class="ilabel">Arc / Series Title</div>
+      <input type="text" id="arcInput" placeholder="Batman Who Laughs, Flashpoint, Civil War, Knightfall..."/>
+      <div class="ihint">Type any Marvel, DC, Image, or indie arc. Volta has the knowledge.</div>
+    </div>
+    <div class="ig">
+      <div class="ilabel">Specific Issue or Scene <span style="color:var(--muted);font-size:0.55rem;">(Optional)</span></div>
+      <input type="text" id="issueInput" placeholder="Issue #1, the origin scene, the final confrontation..."/>
+      <div class="ihint">Leave blank and Volta picks the most iconic moment automatically.</div>
+    </div>
+  </div>
+  <div class="btn-col">
+    <button class="next-btn" onclick="goToReview()">NEXT — REVIEW →</button>
+    <button class="back-btn" onclick="goTo(2)">← BACK</button>
+  </div>
+</div>
+<div class="page" id="page4" style="transform:translateX(60px);">
+  <div class="page-eyebrow">// Step 04 of 04</div>
+  <h1 class="page-title">READY TO<br><span class="v">BUILD.</span></h1>
+  <p class="page-sub">Your script dossier. Everything locked in — hit Generate.</p>
+  <div class="dossier">
+    <div class="dossier-hdr">// VOLTA SCRIPT DOSSIER</div>
+    <div class="drow"><div class="dlabel">Format</div><div class="dval" id="rev-format">—</div></div>
+    <div class="drow"><div class="dlabel">Style</div><div class="dval" id="rev-style">—</div></div>
+    <div class="drow"><div class="dlabel">Arc</div><div class="dval" id="rev-arc">—</div></div>
+    <div class="drow" id="rev-issue-row" style="display:none;"><div class="dlabel">Focus</div><div class="dval" id="rev-issue">—</div></div>
+  </div>
+  <div class="btn-col">
+    <button class="gen-btn" id="genBtn" onclick="generateScript()">
+      <div class="spinner" id="spinner"></div>
+      <span id="btnText">⚡ GENERATE SCRIPT</span>
+    </button>
+    <button class="back-btn" onclick="goTo(3)">← BACK</button>
+  </div>
+  <div class="err-msg" id="errorMsg"></div>
+</div>
+<div class="page" id="page5" style="transform:translateX(60px);">
+  <div class="out-inner">
+    <div class="page-eyebrow" style="margin-bottom:20px;">// Script Complete</div>
+    <div class="out-card">
+      <div class="out-hdr">
+        <div class="out-title">YOUR SCRIPT</div>
+        <div class="out-acts">
+          <button class="abt" id="copyBtn" onclick="copyScript()">COPY</button>
+          <button class="abt" onclick="downloadScript()">DOWNLOAD</button>
+          <button class="abt" onclick="buildAnother()">NEW SCRIPT</button>
+        </div>
+      </div>
+      <div class="out-meta" id="outputMeta"></div>
+      <div class="script-out" id="scriptOutput"></div>
+    </div>
+  </div>
+</div>
+<button class="owner-btn" onclick="document.getElementById('loginModal').classList.add('active')">// OWNER</button>
+<div class="modal-overlay" id="loginModal">
+  <div class="modal-box">
+    <button class="mclose" onclick="closeModal()">✕</button>
+    <div class="mlabel">// Restricted</div>
+    <div class="mtitle">OWNER PORTAL</div>
+    <p class="msub">Enter your access code.</p>
+    <input type="password" class="minput" id="pwInput" placeholder="ACCESS CODE" onkeydown="if(event.key==='Enter')checkPW()"/>
+    <div class="merr" id="pwError">⚠ Invalid code. Try again.</div>
+    <button class="mbtn" onclick="checkPW()">AUTHENTICATE</button>
+  </div>
+</div>
+<div class="dash" id="dashboard">
+  <nav class="dash-nav">
+    <div style="display:flex;align-items:center;">
+      <div class="dash-logo">VOLTA</div><span class="dash-badge">OWNER</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <span id="liveTime" style="font-family:'Courier Prime',monospace;font-size:0.68rem;color:var(--muted);"></span>
+      <button class="dash-exit" onclick="exitDash()">✕ EXIT</button>
+    </div>
+  </nav>
+  <div class="dash-body">
+    <div class="dash-greet">
+      <h1>GOOD <span id="tod">EVENING</span>, JOHN.</h1>
+      <p id="dashDate"></p>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">Total Users</div><div class="kpi-value" id="k1">0</div><div class="kpi-change up">↑ +18% this month</div></div>
+      <div class="kpi"><div class="kpi-label">Monthly Revenue</div><div class="kpi-value" id="k2">$0</div><div class="kpi-change up">↑ +22% vs last month</div></div>
+      <div class="kpi"><div class="kpi-label">Visits Today</div><div class="kpi-value" id="k3">0</div><div class="kpi-change up">↑ Live</div></div>
+      <div class="kpi"><div class="kpi-label">Scripts Generated</div><div class="kpi-value" id="k4">0</div><div class="kpi-change up">↑ +340 this week</div></div>
+      <div class="kpi"><div class="kpi-label">Active Subscribers</div><div class="kpi-value" id="k5">0</div><div class="kpi-change up">↑ Growing</div></div>
+      <div class="kpi"><div class="kpi-label">Churn Rate</div><div class="kpi-value">3.2%</div><div class="kpi-change down">↓ Target &lt;5%</div></div>
+    </div>
+    <div class="charts-row">
+      <div class="chart-card"><div class="chart-title">FOOT TRAFFIC</div><div class="chart-sub">Daily visits — last 14 days</div><div class="bar-chart" id="trafficChart"></div></div>
+      <div class="chart-card"><div class="chart-title">PLAN SPLIT</div><div class="chart-sub">By subscription</div><div class="donut-wrap"><svg class="donut-svg" viewBox="0 0 120 120" id="donutChart"></svg><div class="donut-legend" id="donutLegend"></div></div></div>
+    </div>
+    <div class="charts-row">
+      <div class="chart-card"><div class="chart-title">MONTHLY REVENUE</div><div class="chart-sub">Rolling 12-month MRR</div><div class="bar-chart" id="revenueChart"></div></div>
+      <div class="chart-card"><div class="chart-title">SCRIPTS BUILT</div><div class="chart-sub">Per week — last 8 weeks</div><div class="bar-chart" id="scriptsChart"></div></div>
+    </div>
+    <div class="chart-card"><div class="chart-title">TOP NARRATIVE STYLES</div><div class="chart-sub">Most used this month</div><div class="bar-chart" id="stylesChart"></div></div>
+    <div class="table-card">
+      <div class="chart-title">RECENT SIGNUPS</div><div class="chart-sub">Last 10 new accounts</div>
+      <table class="data-table"><thead><tr><th>User</th><th>Plan</th><th>Joined</th><th>Scripts</th><th>Status</th></tr></thead><tbody id="usersTable"></tbody></table>
+    </div>
+  </div>
+</div>
