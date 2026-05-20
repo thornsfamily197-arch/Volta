@@ -307,7 +307,7 @@ const STYLES=[
 {id:'suspense',name:'Suspenseful & Mysterious',desc:'Slow burn, building dread. Perfect for horror and conspiracy arcs.'},
 {id:'hype',name:'Hype & Hyperbolic',desc:'Maximum energy. This is the most insane thing that ever happened.'},
 ]
-let selFormat='short',selStyle='3rd',curPage=1;
+let selFormat='short',selStyle='dark',curPage=1;
 function buildStyleGrid(){const g=document.getElementById('styleGrid');g.innerHTML='';STYLES.forEach(s=>{const d=document.createElement('div');d.className='style-chip'+(s.id===selStyle?' sel':'');d.id='sc-'+s.id;d.onclick=()=>selectStyle(s.id);d.innerHTML='<span class="sc-name">'+s.name+'</span><span class="sc-desc">'+s.desc+'</span>';g.appendChild(d);});}
 buildStyleGrid();
 function selectFormat(f){selFormat=f;document.getElementById('fc-short').classList.toggle('sel',f==='short');document.getElementById('fc-long').classList.toggle('sel',f==='long');}
