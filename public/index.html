@@ -126,7 +126,7 @@ body{background:var(--ink);color:var(--text);font-family:'DM Sans',sans-serif;di
     <div class="welcome-sub">// AI Comic Script Builder</div>
     <h2 class="welcome-title">WHAT COMIC ARE WE BREAKING DOWN?</h2>
     <p class="welcome-desc">Tell me the comic, arc, or issue. I will write the full breakdown script from page one to the last panel — ready to record and post.</p>
-    <div class="suggestions">
+    <div class="suggestions" style="display:none">
       <div class="suggestion" onclick="fillInput('Write a script for Batman Who Laughs issue 1')">
         <div class="sug-title">Batman Who Laughs</div>
         <div class="sug-desc">Dark horror breakdown</div>
@@ -213,7 +213,7 @@ function addMessage(role,content,isScript){
   const bubble=document.createElement('div');bubble.className='msg-bubble'+(isScript?' script':'');bubble.textContent=content;
   if(role==='volta'&&isScript){
     const actions=document.createElement('div');actions.className='msg-actions';
-    actions.innerHTML='<button class="msg-action" onclick="copyText(this)">COPY</button><button class="msg-action" onclick="sendFollowUp('Make it longer')">LONGER</button><button class="msg-action" onclick="sendFollowUp('Make it more intense and hype')">MORE HYPE</button><button class="msg-action" onclick="sendFollowUp('Make it darker and more gritty')">DARKER</button><button class="msg-action" onclick="sendFollowUp('Continue to the next issue')">NEXT ISSUE</button>';
+    actions.innerHTML='<button class="msg-action" onclick="copyText(this)">COPY</button><button class="msg-action" onclick="sendFollowUp("Make it longer")">LONGER</button><button class="msg-action" onclick="sendFollowUp("Make it more intense and hype")">MORE HYPE</button><button class="msg-action" onclick="sendFollowUp("Make it darker and more gritty")">DARKER</button><button class="msg-action" onclick="sendFollowUp("Continue to the next issue")">NEXT ISSUE</button>';
     const inner=document.createElement('div');inner.appendChild(bubble);inner.appendChild(actions);
     msg.appendChild(avatar);msg.appendChild(inner);
   } else {msg.appendChild(avatar);msg.appendChild(bubble);}
