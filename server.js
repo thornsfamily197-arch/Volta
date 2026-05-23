@@ -1,8 +1,37 @@
 const express = require('express');
 const path = require('path');
 const https = require('https');
+const http = require('http');
 const app = express();
 app.use(express.json());
+
+function httpsRequest(url) {
+  return new Promise((resolve, reject) => {
+    const client = url.startsWith('https') ? https : http;
+    client.get(url, {headers:{'User-Agent':'Mozilla/5.0 (compatible; Volta/1.0)'}}, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => resolve(data));
+    }).on('error', reject);
+  });
+}
+
+async function searchComicPlot(query) {
+  try {
+    const searchQuery = encodeURIComponent(query + ' comic issue plot summary');
+    const wikiUrl = 'https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=' + searchQuery + '&format=json&srlimit=2';
+    const wikiData = JSON.parse(await httpsRequest(wikiUrl));
+    const results = wikiData.query.search;
+    if (!results || !results.length) return '';
+    const pageId = results[0].pageid;
+    const pageUrl = 'https://en.wikipedia.org/w/api.php?action=query&pageids=' + pageId + '&prop=extracts&explaintext=true&format=json';
+    const pageData = JSON.parse(await httpsRequest(pageUrl));
+    const extract = pageData.query.pages[pageId].extract || '';
+    return extract.substring(0, 3000);
+  } catch(e) {
+    return '';
+  }
+}
 
 function callAnthropic(payload) {
   return new Promise((resolve, reject) => {
@@ -35,10 +64,20 @@ function callAnthropic(payload) {
 app.post('/api/chat', async (req, res) => {
   try {
     const { messages, system } = req.body;
+    const lastMessage = messages[messages.length - 1].content;
+    const isComicRequest = messages.length <= 2;
+    
+    let comicInfo = '';
+    if (isComicRequest) {
+      comicInfo = await searchComicPlot(lastMessage);
+    }
+    
+    const enhancedSystem = system + (comicInfo ? ' IMPORTANT COMIC INFORMATION FROM RESEARCH: ' + comicInfo + ' Use this accurate information when writing the script.' : '');
+    
     const data = await callAnthropic({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 2000,
-      system: system,
+      system: enhancedSystem,
       messages: messages
     });
     res.json(data);
