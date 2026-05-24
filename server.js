@@ -1,33 +1,72 @@
 const express = require('express');
 const path = require('path');
 const https = require('https');
-const http = require('http');
 const app = express();
 app.use(express.json());
 
 function httpsRequest(url) {
   return new Promise((resolve, reject) => {
-    const client = url.startsWith('https') ? https : http;
-    client.get(url, {headers:{'User-Agent':'Mozilla/5.0 (compatible; Volta/1.0)'}}, (res) => {
+    https.get(url, {headers:{'User-Agent':'Mozilla/5.0'}}, (res) => {
       let data = '';
+      if(res.statusCode === 301 || res.statusCode === 302) {
+        return httpsRequest(res.headers.location).then(resolve).catch(reject);
+      }
       res.on('data', c => data += c);
       res.on('end', () => resolve(data));
     }).on('error', reject);
   });
 }
 
-async function searchComicPlot(query) {
+async function searchComic(query) {
   try {
-    const searchQuery = encodeURIComponent(query + ' comic issue plot summary');
-    const wikiUrl = 'https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=' + searchQuery + '&format=json&srlimit=2';
-    const wikiData = JSON.parse(await httpsRequest(wikiUrl));
-    const results = wikiData.query.search;
-    if (!results || !results.length) return '';
+    const q = encodeURIComponent(query + ' comic plot summary');
+    const url = 'https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=' + q + '&format=json&srlimit=3';
+    const data = JSON.parse(await httpsRequest(url));
+    const results = data.query.search;
+    if(!results.length) return '';
+    let allText = '';
+    for(let i = 0; i < Math.min(2, results.length); i++) {
+      const pageId = results[i].pageid;
+      const pageUrl = 'https://en.wikipedia.org/w/api.php?action=query&pageids=' + pageId + '&prop=extracts&explaintext=true&format=json';
+      const pageData = JSON.parse(await httpsRequest(pageUrl));
+      const extract = pageData.query.pages[pageId].extract || '';
+      allText += extract.substring(0, 2000) + ' ';
+    }
+    return allText.trim();
+  } catch(e) {
+    return '';
+  }
+}
+
+async function searchDCWiki(query) {
+  try {
+    const q = encodeURIComponent(query);
+    const url = 'https://dc.fandom.com/api.php?action=query&list=search&srsearch=' + q + '&format=json&srlimit=2';
+    const data = JSON.parse(await httpsRequest(url));
+    const results = data.query.search;
+    if(!results || !results.length) return '';
     const pageId = results[0].pageid;
-    const pageUrl = 'https://en.wikipedia.org/w/api.php?action=query&pageids=' + pageId + '&prop=extracts&explaintext=true&format=json';
+    const pageUrl = 'https://dc.fandom.com/api.php?action=query&pageids=' + pageId + '&prop=extracts&explaintext=true&format=json';
     const pageData = JSON.parse(await httpsRequest(pageUrl));
     const extract = pageData.query.pages[pageId].extract || '';
-    return extract.substring(0, 3000);
+    return extract.substring(0, 2000);
+  } catch(e) {
+    return '';
+  }
+}
+
+async function searchMarvelWiki(query) {
+  try {
+    const q = encodeURIComponent(query);
+    const url = 'https://marvel.fandom.com/api.php?action=query&list=search&srsearch=' + q + '&format=json&srlimit=2';
+    const data = JSON.parse(await httpsRequest(url));
+    const results = data.query.search;
+    if(!results || !results.length) return '';
+    const pageId = results[0].pageid;
+    const pageUrl = 'https://marvel.fandom.com/api.php?action=query&pageids=' + pageId + '&prop=extracts&explaintext=true&format=json';
+    const pageData = JSON.parse(await httpsRequest(pageUrl));
+    const extract = pageData.query.pages[pageId].extract || '';
+    return extract.substring(0, 2000);
   } catch(e) {
     return '';
   }
@@ -68,11 +107,16 @@ app.post('/api/chat', async (req, res) => {
     const isComicRequest = messages.length <= 2;
     
     let comicInfo = '';
-    if (isComicRequest) {
-      comicInfo = await searchComicPlot(lastMessage);
+    if(isComicRequest) {
+      const [wiki, dc, marvel] = await Promise.all([
+        searchComic(lastMessage),
+        searchDCWiki(lastMessage),
+        searchMarvelWiki(lastMessage)
+      ]);
+      comicInfo = [wiki, dc, marvel].filter(Boolean).join(' ').substring(0, 4000);
     }
     
-    const enhancedSystem = system + (comicInfo ? ' IMPORTANT COMIC INFORMATION FROM RESEARCH: ' + comicInfo + ' Use this accurate information when writing the script.' : '');
+    const enhancedSystem = system + (comicInfo ? ' RESEARCH DATA FOR THIS COMIC: ' + comicInfo + ' Use this to write an accurate script. If the research data conflicts with your training, trust the research data.' : '');
     
     const data = await callAnthropic({
       model: 'claude-haiku-4-5-20251001',
