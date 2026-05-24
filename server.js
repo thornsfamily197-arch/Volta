@@ -111,7 +111,7 @@ app.post('/api/chat', async (req, res) => {
     }
     const enhancedSystem = system + (comicInfo ? ' RESEARCH DATA: '+comicInfo+' Use this for accuracy. Trust this over your training data.' : '');
     const data = await callAnthropic({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 2000,
       system: enhancedSystem,
       messages: messages
