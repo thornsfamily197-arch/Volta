@@ -8,68 +8,62 @@ function httpsRequest(url) {
   return new Promise((resolve, reject) => {
     https.get(url, {headers:{'User-Agent':'Mozilla/5.0'}}, (res) => {
       let data = '';
-      if(res.statusCode === 301 || res.statusCode === 302) {
-        return httpsRequest(res.headers.location).then(resolve).catch(reject);
-      }
+      if(res.statusCode===301||res.statusCode===302) return httpsRequest(res.headers.location).then(resolve).catch(reject);
       res.on('data', c => data += c);
       res.on('end', () => resolve(data));
     }).on('error', reject);
   });
 }
 
-async function searchComic(query) {
+async function searchComicVine(query) {
   try {
-    const q = encodeURIComponent(query + ' comic plot summary');
-    const url = 'https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=' + q + '&format=json&srlimit=3';
+    const q = encodeURIComponent(query);
+    const url = 'https://comicvine.gamespot.com/api/search/?api_key=7c7d9f127854ab6dc184d5330a52f5145c0fa9b2&format=json&query='+q+'&resources=issue&field_list=name,description,deck,volume,issue_number';
+    const data = JSON.parse(await httpsRequest(url));
+    if(!data.results||!data.results.length) return '';
+    const issue = data.results[0];
+    return 'Comic: '+(issue.volume?issue.volume.name:'')+' Issue '+(issue.issue_number||'')+'. '+(issue.deck||'')+' '+(issue.description||'').replace(/<[^>]*>/g,'').substring(0,2000);
+  } catch(e) { return ''; }
+}
+
+async function searchWiki(query) {
+  try {
+    const q = encodeURIComponent(query+' comic plot summary');
+    const url = 'https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch='+q+'&format=json&srlimit=2';
     const data = JSON.parse(await httpsRequest(url));
     const results = data.query.search;
     if(!results.length) return '';
-    let allText = '';
-    for(let i = 0; i < Math.min(2, results.length); i++) {
-      const pageId = results[i].pageid;
-      const pageUrl = 'https://en.wikipedia.org/w/api.php?action=query&pageids=' + pageId + '&prop=extracts&explaintext=true&format=json';
-      const pageData = JSON.parse(await httpsRequest(pageUrl));
-      const extract = pageData.query.pages[pageId].extract || '';
-      allText += extract.substring(0, 2000) + ' ';
-    }
-    return allText.trim();
-  } catch(e) {
-    return '';
-  }
+    const pageId = results[0].pageid;
+    const pageUrl = 'https://en.wikipedia.org/w/api.php?action=query&pageids='+pageId+'&prop=extracts&explaintext=true&format=json';
+    const pageData = JSON.parse(await httpsRequest(pageUrl));
+    return (pageData.query.pages[pageId].extract||'').substring(0,2000);
+  } catch(e) { return ''; }
 }
 
 async function searchDCWiki(query) {
   try {
     const q = encodeURIComponent(query);
-    const url = 'https://dc.fandom.com/api.php?action=query&list=search&srsearch=' + q + '&format=json&srlimit=2';
+    const url = 'https://dc.fandom.com/api.php?action=query&list=search&srsearch='+q+'&format=json&srlimit=1';
     const data = JSON.parse(await httpsRequest(url));
-    const results = data.query.search;
-    if(!results || !results.length) return '';
-    const pageId = results[0].pageid;
-    const pageUrl = 'https://dc.fandom.com/api.php?action=query&pageids=' + pageId + '&prop=extracts&explaintext=true&format=json';
+    if(!data.query.search.length) return '';
+    const pageId = data.query.search[0].pageid;
+    const pageUrl = 'https://dc.fandom.com/api.php?action=query&pageids='+pageId+'&prop=extracts&explaintext=true&format=json';
     const pageData = JSON.parse(await httpsRequest(pageUrl));
-    const extract = pageData.query.pages[pageId].extract || '';
-    return extract.substring(0, 2000);
-  } catch(e) {
-    return '';
-  }
+    return (pageData.query.pages[pageId].extract||'').substring(0,2000);
+  } catch(e) { return ''; }
 }
 
 async function searchMarvelWiki(query) {
   try {
     const q = encodeURIComponent(query);
-    const url = 'https://marvel.fandom.com/api.php?action=query&list=search&srsearch=' + q + '&format=json&srlimit=2';
+    const url = 'https://marvel.fandom.com/api.php?action=query&list=search&srsearch='+q+'&format=json&srlimit=1';
     const data = JSON.parse(await httpsRequest(url));
-    const results = data.query.search;
-    if(!results || !results.length) return '';
-    const pageId = results[0].pageid;
-    const pageUrl = 'https://marvel.fandom.com/api.php?action=query&pageids=' + pageId + '&prop=extracts&explaintext=true&format=json';
+    if(!data.query.search.length) return '';
+    const pageId = data.query.search[0].pageid;
+    const pageUrl = 'https://marvel.fandom.com/api.php?action=query&pageids='+pageId+'&prop=extracts&explaintext=true&format=json';
     const pageData = JSON.parse(await httpsRequest(pageUrl));
-    const extract = pageData.query.pages[pageId].extract || '';
-    return extract.substring(0, 2000);
-  } catch(e) {
-    return '';
-  }
+    return (pageData.query.pages[pageId].extract||'').substring(0,2000);
+  } catch(e) { return ''; }
 }
 
 function callAnthropic(payload) {
@@ -103,21 +97,19 @@ function callAnthropic(payload) {
 app.post('/api/chat', async (req, res) => {
   try {
     const { messages, system } = req.body;
-    const lastMessage = messages[messages.length - 1].content;
+    const lastMessage = messages[messages.length-1].content;
     const isComicRequest = messages.length <= 2;
-    
     let comicInfo = '';
     if(isComicRequest) {
-      const [wiki, dc, marvel] = await Promise.all([
-        searchComic(lastMessage),
+      const [cv, wiki, dc, marvel] = await Promise.all([
+        searchComicVine(lastMessage),
+        searchWiki(lastMessage),
         searchDCWiki(lastMessage),
         searchMarvelWiki(lastMessage)
       ]);
-      comicInfo = [wiki, dc, marvel].filter(Boolean).join(' ').substring(0, 4000);
+      comicInfo = [cv, wiki, dc, marvel].filter(Boolean).join(' ').substring(0,4000);
     }
-    
-    const enhancedSystem = system + (comicInfo ? ' RESEARCH DATA FOR THIS COMIC: ' + comicInfo + ' Use this to write an accurate script. If the research data conflicts with your training, trust the research data.' : '');
-    
+    const enhancedSystem = system + (comicInfo ? ' RESEARCH DATA: '+comicInfo+' Use this for accuracy. Trust this over your training data.' : '');
     const data = await callAnthropic({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 2000,
@@ -126,10 +118,10 @@ app.post('/api/chat', async (req, res) => {
     });
     res.json(data);
   } catch(e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({error: e.message});
   }
 });
 
 app.use(express.static('public'));
 app.use((req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-app.listen(process.env.PORT || 3000, () => console.log('Volta running'));
+app.listen(process.env.PORT||3000, () => console.log('Volta running'));
