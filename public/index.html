@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Volta — AI Comic Script Builder</title>
+<title>Volta — AI Script Builder</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet"/>
 <style>
 :root{--ink:#0a0a0f;--panel:#111118;--border:#1e1e2e;--volt:#e8ff00;--arc:#ff3c3c;--blue:#00cfff;--text:#e8e8f0;--muted:#6b6b80;}
@@ -117,41 +117,37 @@ body{background:var(--ink);color:var(--text);font-family:'DM Sans',sans-serif;di
 <body>
 <nav class="nav">
   <div class="logo">VOLT<span>A</span></div>
-  <div class="nav-tag">// AI Comic Script Builder</div>
+  <div class="nav-tag">// AI Script Builder</div>
   <button class="owner-btn" onclick="document.getElementById('loginModal').classList.add('active')">// OWNER</button>
 </nav>
 <div class="chat-wrap" id="chatWrap">
   <div class="welcome" id="welcome">
     <div class="welcome-logo">VOLT<span>A</span></div>
     <div class="welcome-sub">// AI Comic Script Builder</div>
-    <h2 class="welcome-title">WHAT COMIC ARE WE BREAKING DOWN?</h2>
-    <p class="welcome-desc">Tell me the comic, arc, or issue. I will write the full breakdown script from page one to the last panel — ready to record and post.</p>
+    <h2 class="welcome-title">WHAT ARE WE SCRIPTING TODAY?</h2>
+    <p class="welcome-desc">Tell me what you want to script. Comics, true crime, history, sports, horror, motivation — any topic, any niche. I write the voiceover and you record it.</p>
     <div class="suggestions" style="display:none">
-      <div class="suggestion" onclick="fillInput('Write a script for Batman Who Laughs issue 1')">
-        <div class="sug-title">Batman Who Laughs</div>
-        <div class="sug-desc">Dark horror breakdown</div>
+      <div class="suggestion" onclick="fillInput("Write a script for Batman Who Laughs issue 1")">
+        <div class="sug-title">Batman Who Laughs</div><div class="sug-desc">Comic breakdown</div>
       </div>
-      <div class="suggestion" onclick="fillInput('Write a script for Flashpoint issue 1')">
-        <div class="sug-title">Flashpoint #1</div>
-        <div class="sug-desc">Timeline shattering event</div>
+      <div class="suggestion" onclick="fillInput("Write a script for the murder of JFK")">
+        <div class="sug-title">Murder of JFK</div><div class="sug-desc">True crime history</div>
       </div>
-      <div class="suggestion" onclick="fillInput('Write a script for Absolute Batman issue 1')">
-        <div class="sug-title">Absolute Batman #1</div>
-        <div class="sug-desc">The new Dark Knight</div>
+      <div class="suggestion" onclick="fillInput("Write a script about the Titanic sinking")">
+        <div class="sug-title">The Titanic</div><div class="sug-desc">Historical breakdown</div>
       </div>
-      <div class="suggestion" onclick="fillInput('Write a script for Civil War issue 1')">
-        <div class="sug-title">Civil War #1</div>
-        <div class="sug-desc">Heroes vs heroes</div>
+      <div class="suggestion" onclick="fillInput("Write a script for Civil War issue 1")">
+        <div class="sug-title">Civil War #1</div><div class="sug-desc">Marvel breakdown</div>
       </div>
     </div>
   </div>
 </div>
 <div class="input-area">
   <div class="input-wrap">
-    <textarea class="input-box" id="userInput" placeholder="Tell me a comic arc or issue — I will write the full script..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <textarea class="input-box" id="userInput" placeholder="Tell me what you want to script — comics, true crime, history, anything..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
     <button class="send-btn" id="sendBtn" onclick="sendMessage()">SEND</button>
   </div>
-  <div class="input-hint">Try: "Batman Who Laughs issue 1" · "Make it longer" · "Now do issue 2" · "Make it more intense"</div>
+  <div class="input-hint">Try: "Batman Who Laughs issue 1" · "The murder of JFK" · "Ronaldo vs Messi" · "Make it more intense"</div>
 </div>
 <div class="modal-overlay" id="loginModal">
   <div class="modal-box">
@@ -200,7 +196,7 @@ body{background:var(--ink);color:var(--text);font-family:'DM Sans',sans-serif;di
 const OWNER_PASS = 'V0lt@DC24';
 let conversationHistory = [];
 let isGenerating = false;
-const SYSTEM_PROMPT = 'You are Volta, an expert AI comic book breakdown narrator with deep knowledge of Marvel, DC, Image and all major publishers. You write voiceover scripts for YouTube Shorts creators. When someone gives you a comic arc or issue ALWAYS write the script immediately using your knowledge - never ask for more information. If you have research data use it. If not use your training knowledge confidently. Style rules: Open mid-action with no setup. Every sentence is a new event. Use but then and suddenly to drive momentum. Present tense throughout. Raise the stakes every single line. Short punchy sentences. Describe exactly what is happening in each panel so the creator can line up their comic photos to the narration. End on a one-line gut punch. No markdown. No headers. No panel numbers. No asterisks. No stage directions. Just raw clean narration ready to paste into ElevenLabs. You can also make scripts longer shorter more intense darker or continue to the next issue when asked.';
+const SYSTEM_PROMPT = 'You are Volta, an expert AI script writer for YouTube creators. You write voiceover scripts for any topic and any niche including comics, true crime, history, sports, horror, motivation, documentary, news and more. When someone gives you a topic ALWAYS write the script immediately using your knowledge - never ask for more information. Style rules: Open mid-action with no setup. Every sentence is a new event. Use but then and suddenly to drive momentum. Present tense throughout. Raise the stakes every single line. Short punchy sentences. Make it impossible to stop listening. End on a one-line gut punch. No markdown. No headers. No asterisks. No stage directions. Just raw clean narration ready to paste into ElevenLabs. You can make scripts longer shorter more intense darker or cover the next part when asked.';
 function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,160)+'px';}
 function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}
 function fillInput(text){const input=document.getElementById('userInput');input.value=text;autoResize(input);input.focus();}
